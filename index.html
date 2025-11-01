@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Hero & Build Spinner — حرفه‌ای</title>
+<meta name="description" content="انتخاب تصادفی هیرو و استارتر آیتم‌ها (تلاش برای خواندن از Liquipedia، fallback محلی)">
+
+<style>
+:root{
+  --bg1:#04040a; --bg2:#0b0620; --card:#0e0b18;
+  --muted:#98a2b3; --accent1:#7c3aed; --accent2:#8b5cf6;
+  --glass: rgba(255,255,255,0.03); --radius:14px;
+  font-family: "Vazirmatn","Tahoma","Helvetica Neue",sans-serif;
+  color-scheme:dark; color:#eef2ff;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:
+  radial-gradient(900px 300px at 10% 12%, rgba(124,58,237,0.06), transparent),
+  linear-gradient(180deg,var(--bg1),var(--bg2));
+  display:flex;align-items:center;justify-content:center;padding:28px;}
+.container{width:100%;max-width:1180px;border-radius:16px;padding:18px;background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));box-shadow:0 18px 60px rgba(6,6,18,0.7)}
+.header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent1),var(--accent2));display:grid;place-items:center;font-weight:800}
+.hint{color:var(--muted);font-size:13px}
+.controls{display:flex;gap:8px;align-items:center}
+.btn{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:white;padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:800;box-shadow:0 10px 28px rgba(124,58,237,0.12)}
+.btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);box-shadow:none}
+.grid{display:grid;grid-template-columns:1fr 370px;gap:16px;align-items:start}
+.panel{background:linear-gradient(180deg,var(--card), rgba(255,255,255,0.01));padding:14px;border-radius:12px;box-shadow:0 8px 26px rgba(2,4,12,0.6)}
+.row{display:flex;gap:12px;align-items:center}
+.slot-row{display:flex;gap:12px;justify-content:center;align-items:center;margin:6px 0}
+.slot{width:260px;height:120px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),rgba(255,255,255,0.02));display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;border:1px solid rgba(255,255,255,0.03);position:relative;overflow:hidden}
+.slot .label{font-weight:800;color:var(--muted);font-size:13px;margin-bottom:6px}
+.hero-preview{display:flex;gap:10px;align-items:center}
+.thumb{width:72px;height:72px;border-radius:10px;overflow:hidden;background:#07121a;border:1px solid rgba(255,255,255,0.03);display:grid;place-items:center}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.name{font-weight:900}
+.role-badge{padding:6px 10px;border-radius:999px;background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));color:var(--muted);font-weight:700}
+.items-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.item-card{display:flex;flex-direction:column;gap:6px;align-items:center;padding:8px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.01),rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.02)}
+.item-thumb{width:44px;height:44px;border-radius:8px;overflow:hidden;background:#08121a;border:1px solid rgba(255,255,255,0.03);display:grid;place-items:center}
+.item-thumb img{width:100%;height:100%;object-fit:cover}
+.item-name{font-size:12px;color:var(--muted);text-align:center;line-height:1.1}
+.muted{color:var(--muted);font-size:13px}
+.result{margin-top:10px;padding:12px;border-radius:10px;background:rgba(255,255,255,0.02)}
+.small{font-size:13px;color:var(--muted)}
+.center-mask{position:absolute;left:0;right:0;top:50%;height:120px;margin-top:-60px;border-radius:12px;pointer-events:none;border:1px solid rgba(124,58,237,0.06);box-shadow:0 10px 40px rgba(124,58,237,0.03)}
+@media (max-width:980px){.grid{grid-template-columns:1fr}.slot{width:32%}}
+.spin{animation:spinPulse 1s cubic-bezier(.2,.9,.2,1)}
+@keyframes spinPulse{0%{transform:translateY(-8px) scale(.98)}50%{transform:translateY(6px) scale(1.03)}100%{transform:none}}
+</style>
+</head>
+<body>
+  <div class="container" role="main">
+    <div class="header">
+      <div class="brand">
+        <div class="logo">HS</div>
+        <div>
+          <div style="font-weight:900">Hero & Build Spinner</div>
+          <div class="hint">انتخاب حرفه‌ای هیرو + بیلد آیتم — چندبار پشت سر هم قابل اجرا</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="spinBtn" class="btn">Generate</button>
+        <button id="spinQuickBtn" class="btn ghost">Quick ×3</button>
+        <select id="sourceMode" style="padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);margin-left:6px">
+          <option value="local">Fallback local builds</option>
+          <option value="liquipedia">Fetch builds from Liquipedia (try)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- main -->
+      <section class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:900">نتیجه</div>
+          <div class="small">هر بار Generate می‌زنی نقش → هیرو → بیلد (آیتم‌ها) تولید می‌شه</div>
+        </div>
+
+        <div class="slot-row" aria-live="polite">
+          <div class="slot">
+            <div class="label">نقش</div>
+            <div id="roleSlot" class="role-badge">—</div>
+          </div>
+
+          <div class="slot">
+            <div class="label">هیرو</div>
+            <div class="hero-preview">
+              <div class="thumb" id="heroThumb"><img src="" alt="hero" id="heroThumbImg"/></div>
+              <div>
+                <div class="name" id="heroSlot">—</div>
+                <div class="small muted" id="heroRoles">—</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="slot">
+            <div class="label">بیلد</div>
+            <div id="buildTag" class="small muted">—</div>
+          </div>
+        </div>
+
+        <div style="margin-top:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:900">آیتم‌ها</div>
+            <div class="small muted">استارتر آیتم‌ها — اسم هر آیتم زیر عکس نمایش داده می‌شود</div>
+          </div>
+
+          <div class="items-grid" id="itemsGrid" aria-live="polite">
+            <!-- items inserted here -->
+          </div>
+        </div>
+
+        <div class="result" id="resultPanel" style="display:none">
+          <div style="font-weight:900;margin-bottom:6px">خلاصه</div>
+          <div style="display:flex;justify-content:space-between"><div class="small muted">هیرو</div><div id="outHero">—</div></div>
+          <div style="display:flex;justify-content:space-between"><div class="small muted">نقش</div><div id="outRole">—</div></div>
+          <div style="display:flex;justify-content:space-between"><div class="small muted">آیتم‌ها</div><div id="outItems">—</div></div>
+        </div>
+      </section>
+
+      <!-- side -->
+      <aside class="panel">
+        <div style="font-weight:900;margin-bottom:8px">تنظیمات</div>
+
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label class="small muted">فقط نمایش نقش مشخص</label>
+          <select id="roleFilter" style="padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)">
+            <option value="any">همه نقش‌ها</option>
+            <option value="core">کری / کور</option>
+            <option value="mid">میدلاین</option>
+            <option value="offlane">آفلین</option>
+            <option value="support">ساپورت</option>
+          </select>
+
+          <label class="small muted">جستجوی اسم هیرو</label>
+          <input id="heroSearch" placeholder="مثال: Pudge" style="padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)">
+
+          <div style="display:flex;gap:8px;align-items:center">
+            <button id="downloadBtn" class="btn ghost">دانلود JSON نتیجه</button>
+            <div style="flex:1"></div>
+            <button id="reloadBtn" class="btn ghost">ریست نمایه</button>
+          </div>
+
+          <div style="margin-top:12px" class="small muted">می‌تونی انتخاب کنی بیلدها از Liquipedia خوانده بشه یا از مجموعهٔ محلی (fallback). در حالت Liquipedia تلاش می‌کنیم قالب Template:Items را پارس کنیم (ممکنه CORS بلاک کنه — در آن صورت محلی استفاده می‌شود).</div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+<script>
+/* همان منطق اصلی شما — فقط اصلاحات زیر انجام شده:
+   - عکس هیرو از Steam CDN (dota_react ... _full.png)
+   - عکس آیتم‌ها ابتدا از Liquipedia اگر موجود بود، در غیر این صورت از Steam CDN items _lg.png
+   - زیر هر عکس آیتم، اسم آیتم نمایش داده می‌شود
+   - رول 'آفلین' ثابت و درست
+   - Generate قابل زدن چندبار پیاپی
+*/
+
+/* ---- داده‌های نمونه اولیه (می‌تونیم کاملش کنیم) ---- */
+const HEROES = [
+{id:"antimage",title:"Anti-Mage",roles:["core"]},
+{id:"axe",title:"Axe",roles:["offlane","support"]},
+{id:"bane",title:"Bane",roles:["support"]},
+{id:"bloodseeker",title:"Bloodseeker",roles:["core","mid"]},
+{id:"crystal_maiden",title:"Crystal Maiden",roles:["support"]},
+{id:"drow_ranger",title:"Drow Ranger",roles:["core"]},
+{id:"earthshaker",title:"Earthshaker",roles:["support","offlane"]},
+{id:"juggernaut",title:"Juggernaut",roles:["core"]},
+{id:"mirana",title:"Mirana",roles:["support","mid","core"]},
+{id:"morphling",title:"Morphling",roles:["core","mid"]},
+{id:"shadow_fiend",title:"Shadow Fiend",roles:["mid","core"]},
+{id:"phantom_lancer",title:"Phantom Lancer",roles:["core"]},
+{id:"puck",title:"Puck",roles:["mid","offlane"]},
+{id:"razor",title:"Razor",roles:["core","offlane","mid"]},
+{id:"sand_king",title:"Sand King",roles:["offlane","support"]},
+{id:"storm_spirit",title:"Storm Spirit",roles:["mid"]},
+{id:"sven",title:"Sven",roles:["core"]},
+{id:"tiny",title:"Tiny",roles:["core","mid","offlane","support"]},
+{id:"vengeful_spirit",title:"Vengeful Spirit",roles:["support","offlane","core"]},
+{id:"windrunner",title:"Windranger",roles:["mid","support","core"]},
+{id:"zeus",title:"Zeus",roles:["mid","support"]},
+{id:"kunkka",title:"Kunkka",roles:["mid","support","offlane"]},
+{id:"lina",title:"Lina",roles:["mid","support","core"]},
+{id:"lich",title:"Lich",roles:["support"]},
+{id:"lion",title:"Lion",roles:["support"]},
+{id:"shadow_shaman",title:"Shadow Shaman",roles:["support"]},
+{id:"slardar",title:"Slardar",roles:["offlane","core"]},
+{id:"tidehunter",title:"Tidehunter",roles:["offlane","support"]},
+{id:"witch_doctor",title:"Witch Doctor",roles:["support"]},
+{id:"riki",title:"Riki",roles:["core","mid"]},
+{id:"enigma",title:"Enigma",roles:["offlane","support"]},
+{id:"tinker",title:"Tinker",roles:["mid"]},
+{id:"sniper",title:"Sniper",roles:["core","mid"]},
+{id:"necrophos",title:"Necrophos",roles:["mid","offlane","support"]},
+{id:"warlock",title:"Warlock",roles:["support"]},
+{id:"beastmaster",title:"Beastmaster",roles:["offlane"]},
+{id:"queen_of_pain",title:"Queen of Pain",roles:["mid"]},
+{id:"venomancer",title:"Venomancer",roles:["offlane","support"]},
+{id:"faceless_void",title:"Faceless Void",roles:["core","offlane"]},
+{id:"wraith_king",title:"Wraith King",roles:["core","offlane"]},
+{id:"phantom_assassin",title:"Phantom Assassin",roles:["core"]},
+{id:"pugna",title:"Pugna",roles:["support","mid"]},
+{id:"templar_assassin",title:"Templar Assassin",roles:["mid","core"]},
+{id:"viper",title:"Viper",roles:["mid","offlane","core"]},
+{id:"luna",title:"Luna",roles:["core"]},
+{id:"dragon_knight",title:"Dragon Knight",roles:["mid","core","offlane"]},
+{id:"dazzle",title:"Dazzle",roles:["support","offlane"]},
+{id:"clockwerk",title:"Clockwerk",roles:["offlane","support"]},
+{id:"leshrac",title:"Leshrac",roles:["mid","core","support"]},
+{id:"natures_prophet",title:"Nature's Prophet",roles:["offlane","core","support"]},
+{id:"lifestealer",title:"Lifestealer",roles:["core"]},
+{id:"dark_seer",title:"Dark Seer",roles:["offlane"]},
+{id:"clinkz",title:"Clinkz",roles:["core","mid"]},
+{id:"omniknight",title:"Omniknight",roles:["offlane","support"]},
+{id:"enchantress",title:"Enchantress",roles:["support","offlane"]},
+{id:"huskar",title:"Huskar",roles:["core","mid"]},
+{id:"night_stalker",title:"Night Stalker",roles:["offlane","core"]},
+{id:"broodmother",title:"Broodmother",roles:["offlane","core"]},
+{id:"bounty_hunter",title:"Bounty Hunter",roles:["support","offlane"]},
+{id:"weaver",title:"Weaver",roles:["core","offlane","support"]},
+{id:"jakiro",title:"Jakiro",roles:["support"]},
+{id:"batrider",title:"Batrider",roles:["offlane","mid"]},
+{id:"chen",title:"Chen",roles:["support"]},
+{id:"spectre",title:"Spectre",roles:["core"]},
+{id:"doom",title:"Doom",roles:["offlane","core"]},
+{id:"ancient_apparition",title:"Ancient Apparition",roles:["support"]},
+{id:"ursa",title:"Ursa",roles:["core"]},
+{id:"spirit_breaker",title:"Spirit Breaker",roles:["offlane","support","core"]},
+{id:"gyrocopter",title:"Gyrocopter",roles:["core","mid"]},
+{id:"alchemist",title:"Alchemist",roles:["core","mid"]},
+{id:"invoker",title:"Invoker",roles:["mid"]},
+{id:"silencer",title:"Silencer",roles:["support","mid"]},
+{id:"outworld_destroyer",title:"Outworld Destroyer",roles:["mid"]},
+{id:"lycan",title:"Lycan",roles:["core","offlane"]},
+{id:"brewmaster",title:"Brewmaster",roles:["offlane"]},
+{id:"shadow_demon",title:"Shadow Demon",roles:["support"]},
+{id:"lone_druid",title:"Lone Druid",roles:["core"]},
+{id:"chaos_knight",title:"Chaos Knight",roles:["core"]},
+{id:"meepo",title:"Meepo",roles:["mid","core"]},
+{id:"treant",title:"Treant Protector",roles:["support","offlane"]},
+{id:"ogre_magi",title:"Ogre Magi",roles:["support"]},
+{id:"undying",title:"Undying",roles:["support","offlane"]},
+{id:"rubick",title:"Rubick",roles:["support"]},
+{id:"disruptor",title:"Disruptor",roles:["support"]},
+{id:"nyx_assassin",title:"Nyx Assassin",roles:["support","offlane"]},
+{id:"naga_siren",title:"Naga Siren",roles:["core","support"]},
+{id:"keeper_of_the_light",title:"Keeper of the Light",roles:["support"]},
+{id:"io",title:"Io",roles:["support"]},
+{id:"visage",title:"Visage",roles:["mid","offlane"]},
+{id:"slark",title:"Slark",roles:["core"]},
+{id:"medusa",title:"Medusa",roles:["core"]},
+{id:"troll_warlord",title:"Troll Warlord",roles:["core"]},
+{id:"centaur",title:"Centaur Warrunner",roles:["offlane"]},
+{id:"magnus",title:"Magnus",roles:["offlane","mid","support"]},
+{id:"timbersaw",title:"Timbersaw",roles:["offlane"]},
+{id:"bristleback",title:"Bristleback",roles:["offlane","core"]},
+{id:"tusk",title:"Tusk",roles:["support","offlane","mid"]},
+{id:"skywrath_mage",title:"Skywrath Mage",roles:["support","mid"]},
+{id:"abaddon",title:"Abaddon",roles:["offlane","support","core"]},
+{id:"elder_titan",title:"Elder Titan",roles:["support","offlane"]},
+{id:"legion_commander",title:"Legion Commander",roles:["offlane","core"]},
+{id:"techies",title:"Techies",roles:["support","offlane"]},
+{id:"ember_spirit",title:"Ember Spirit",roles:["mid","core"]},
+{id:"earth_spirit",title:"Earth Spirit",roles:["support","offlane"]},
+{id:"underlord",title:"Underlord",roles:["offlane"]},
+{id:"terrorblade",title:"Terrorblade",roles:["core"]},
+{id:"phoenix",title:"Phoenix",roles:["offlane","support"]},
+{id:"oracle",title:"Oracle",roles:["support"]},
+{id:"winter_wyvern",title:"Winter Wyvern",roles:["support","offlane"]},
+{id:"arc_warden",title:"Arc Warden",roles:["core","mid"]},
+{id:"monkey_king",title:"Monkey King",roles:["core","mid","offlane","support"]},
+{id:"dark_willow",title:"Dark Willow",roles:["support"]},
+{id:"pangolier",title:"Pangolier",roles:["offlane","mid"]},
+{id:"grimstroke",title:"Grimstroke",roles:["support"]},
+{id:"hoodwink",title:"Hoodwink",roles:["support","offlane","mid"]},
+{id:"marci",title:"Marci",roles:["support","offlane","core"]},
+{id:"primal_beast",title:"Primal Beast",roles:["offlane","mid","support"]},
+{id:"muerta",title:"Muerta",roles:["mid","core"]},
+{id:"dawnbreaker",title:"Dawnbreaker",roles:["offlane","core","support"]}
+];
+
+/* fallback local builds (در صورت عدم موفقیت fetch) — می‌تونم اینو کامل کنم */
+const LOCAL_BUILDS = {
+  "Anti-Mage": {name:"AM (fallback)", items:["tango","quelling_blade","slippers"]},
+  "Axe": {name:"Axe (fallback)", items:["tango","ring_of_protection","branches"]},
+  "Crystal Maiden": {name:"CM (fallback)", items:["tango","observer_ward","clarity"]}
+};
+
+/* پروکسی‌ها برای دور زدن CORS (مرورگر فقط HTML بدون سرور) */
+const PROXIES = [
+  {id:'allorigins', url: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`, type:'json', extract: r => r.contents},
+  {id:'rjina', url: u => `https://r.jina.ai/http://${u.replace(/^https?:\/\//,'')}`, type:'text', extract: r => r}
+];
+
+/* DOM refs */
+const spinBtn = document.getElementById('spinBtn');
+const spinQuickBtn = document.getElementById('spinQuickBtn');
+const sourceMode = document.getElementById('sourceMode');
+const roleFilter = document.getElementById('roleFilter');
+const heroSearch = document.getElementById('heroSearch');
+const reloadBtn = document.getElementById('reloadBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+
+const roleSlot = document.getElementById('roleSlot');
+const heroSlot = document.getElementById('heroSlot');
+const heroThumbImg = document.getElementById('heroThumbImg');
+const heroRoles = document.getElementById('heroRoles');
+const buildTag = document.getElementById('buildTag');
+const itemsGrid = document.getElementById('itemsGrid');
+const resultPanel = document.getElementById('resultPanel');
+const outHero = document.getElementById('outHero');
+const outRole = document.getElementById('outRole');
+const outItems = document.getElementById('outItems');
+
+let spinning = false;
+
+/* small helpers */
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a; }
+function pick(a){ if(!a||a.length===0) return null; return a[Math.floor(Math.random()*a.length)]; }
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+/* safe set image with fallback inline svg */
+function setImageSafe(imgEl, url, placeholderText){
+  // try to set url, but if error fallback to steam or svg
+  imgEl.onerror = function(){
+    // if url already steam item fallback, then show inline svg placeholder
+    imgEl.onerror = null;
+    imgEl.src = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='72' height='72'><rect width='72' height='72' fill='%2308121c'/><text x='36' y='40' font-size='12' fill='%23a9b0c0' text-anchor='middle'>${encodeURIComponent(placeholderText||'')}</text></svg>`;
+  };
+  imgEl.src = url;
+}
+
+/* normalize hero name to steam id (best-effort) */
+function heroToId(heroTitle){
+  // many hero titles are single-word or hyphenated; try mapping basic cases:
+  return heroTitle.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
+}
+
+/* check if image exists (fast) */
+function imageExists(url, timeout=3000){
+  return new Promise(resolve=>{
+    const img = new Image();
+    let done=false;
+    img.onload = ()=>{ if(!done){ done=true; resolve(true); } };
+    img.onerror = ()=>{ if(!done){ done=true; resolve(false); } };
+    img.src = url;
+    setTimeout(()=>{ if(!done){ done=true; resolve(false); } }, timeout);
+  });
+}
+
+/* parse starter items from Liquipedia page HTML (best-effort) */
+function parseStarterFromHtml(html){
+  try{
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    // Try to locate headings that say "Starting Items" or similar
+    const headings = Array.from(doc.querySelectorAll('span'));
+    const targetTexts = ["Starting Items","Starting items","Starter Items","Start Items","Starting Items and Boots"];
+    let header = null;
+    for(const t of targetTexts){
+      header = headings.find(s => s.textContent && s.textContent.trim() === t);
+      if(header) break;
+    }
+    let imgs = [];
+    if(header){
+      let el = header.closest('h2,h3,h4') || header.parentElement;
+      let next = el.nextElementSibling;
+      while(next){
+        if(next.querySelectorAll && next.querySelectorAll('img').length>0){
+          imgs = next.querySelectorAll('img');
+          break;
+        }
+        next = next.nextElementSibling;
+      }
+    }
+    // fallback: find a table containing item icons
+    if(!imgs || imgs.length===0){
+      const tables = Array.from(doc.querySelectorAll('table')).filter(t => t.querySelectorAll('img').length>0);
+      if(tables.length) imgs = tables[0].querySelectorAll('img');
+    }
+    imgs = Array.from(imgs || []);
+    const out = imgs.map(img=>{
+      let src = img.getAttribute('src') || img.getAttribute('data-src') || '';
+      if(!src) return null;
+      if(src.startsWith('//')) src = 'https:' + src;
+      if(src.startsWith('/')) src = 'https://liquipedia.net' + src;
+      let name = (img.getAttribute('alt') || img.getAttribute('title') || '').trim();
+      // sometimes name in parent link title
+      if(!name){
+        const a = img.closest('a');
+        if(a && a.getAttribute('title')) name = a.getAttribute('title').trim();
+      }
+      if(!name){
+        // try nearby text
+        const txt = img.parentElement && img.parentElement.textContent ? img.parentElement.textContent.trim() : '';
+        if(txt) name = txt.split('\n')[0].trim();
+      }
+      if(!name) name = src.split('/').pop().split('.')[0];
+      return {name, src};
+    }).filter(Boolean);
+    // dedupe by name
+    const seen = new Set();
+    const dedup = [];
+    for(const it of out){
+      const k = (it.name||'').toLowerCase();
+      if(!seen.has(k)){ seen.add(k); dedup.push(it); }
+    }
+    return dedup;
+  }catch(e){
+    console.warn('parseStarterFromHtml error', e);
+    return [];
+  }
+}
+
+/* try proxies sequentially to fetch Liquipedia page */
+async function fetchHeroStarterFromLiquipedia(heroName){
+  const pageUrl = `https://liquipedia.net/dota2/${encodeURIComponent(heroName)}`;
+  for(const p of PROXIES){
+    try{
+      // update status visually (no UI element to change, but try-catch)
+      const built = p.url(pageUrl);
+      const res = await fetch(built, {mode:'cors'});
+      if(!res.ok) continue;
+      let body;
+      if(p.type === 'json'){
+        const j = await res.json();
+        body = p.extract(j);
+      } else {
+        body = await res.text();
+        body = p.extract(body);
+      }
+      if(!body) continue;
+      const parsed = parseStarterFromHtml(body);
+      if(parsed && parsed.length>0) return {name: 'Liquipedia', items: parsed};
+    }catch(err){
+      // try next proxy
+      // console.warn('proxy failed', p.id, err);
+      continue;
+    }
+  }
+  return null;
+}
+
+/* render itemsGrid from list of {name, src} or fallback names */
+async function renderItemsList(items){
+  itemsGrid.innerHTML = '';
+  const shownNames = [];
+  for(const it of items){
+    let imgSrc = it.src || '';
+    let itemName = it.name || '';
+    // if no src, try steamcdn by generating id from name
+    if(!imgSrc){
+      const id = itemName.toLowerCase().replace(/[^a-z0-9]+/g,'_');
+      imgSrc = `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/items/${id}_lg.png`;
+      // if that doesn't exist later, setImageSafe will fallback
+    }
+    const card = document.createElement('div');
+    card.className = 'item-card';
+    const img = document.createElement('img');
+    img.style.width = '44px';
+    img.style.height = '44px';
+    img.alt = itemName;
+    // set safe image (will fallback to placeholder if broken)
+    setImageSafe(img, imgSrc, itemName.slice(0,2));
+    const nameDiv = document.createElement('div');
+    nameDiv.className = 'item-name';
+    nameDiv.textContent = itemName;
+    card.appendChild((()=>{
+      const wrap = document.createElement('div');
+      wrap.className = 'item-thumb';
+      wrap.appendChild(img);
+      return wrap;
+    })());
+    card.appendChild(nameDiv);
+    itemsGrid.appendChild(card);
+    shownNames.push(itemName);
+    // small delay to keep UI feeling smooth (not required)
+    await sleep(40);
+  }
+  return shownNames;
+}
+
+/* decide build for hero (liquipedia attempt then fallback) */
+async function decideBuildFor(hero){
+  const source = sourceMode.value;
+  if(source === 'liquipedia'){
+    // try several variants of hero title to improve chances: exact, hyphenated, no spaces
+    const candidates = [hero.title, hero.title.replace(/\s+/g,'_'), hero.title.replace(/\s+/g,'-')];
+    for(const c of candidates){
+      const parsed = await fetchHeroStarterFromLiquipedia(c);
+      if(parsed && parsed.items && parsed.items.length>0){
+        return parsed;
+      }
+    }
+  }
+  // local fallback (if exists)
+  if(LOCAL_BUILDS[hero.title]){
+    const b = LOCAL_BUILDS[hero.title];
+    return {name: b.name, items: b.items.map(n => ({name:n, src:''}))};
+  }
+  // final fallback: return empty and let renderItemsList map to steamcdn by name heuristics
+  return {name: 'Random fallback', items: [{name:'tango'},{name:'branches'},{name:'faerie_fire'}]};
+}
+
+/* main render function */
+async function renderBuild(hero, roleLabel, build){
+  // set immediate UI
+  roleSlot.textContent = roleLabel;
+  heroSlot.textContent = hero.title;
+  heroRoles.textContent = (hero.roles||[]).join('، ');
+  buildTag.textContent = build.name || '—';
+  // hero portrait (steamcdn dota_react *_full.png)
+  const id = hero.id || heroToId(hero.title);
+  const heroUrl = `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/heroes/${id}_full.png`;
+  setImageSafe(heroThumbImg, heroUrl, hero.title.slice(0,2));
+
+  // items
+  const parsedItems = build.items || [];
+  await renderItemsList(parsedItems);
+
+  // summary
+  outHero.textContent = hero.title;
+  outRole.textContent = roleLabel;
+  outItems.textContent = (parsedItems.map(x=>x.name)).join(', ');
+  resultPanel.style.display = 'block';
+}
+
+/* main spin flow */
+async function doSpin(){
+  if(spinning) return;
+  spinning = true;
+  spinBtn.disabled = true;
+  spinQuickBtn.disabled = true;
+
+  // pick role (respect roleFilter)
+  const rf = roleFilter.value;
+  let chosenRole = (rf && rf!=='any') ? rf : pick(['support','mid','offlane','core']);
+  // label map (فارسی)
+  const roleMap = { support:'ساپورت', mid:'میدلاین', offlane:'آفلین', core:'کری' };
+  const roleLabel = roleMap[chosenRole] || chosenRole;
+
+  // candidate pool
+  let candidates = HEROES.slice();
+  // apply search filter
+  const q = (heroSearch.value || '').trim().toLowerCase();
+  if(q) candidates = candidates.filter(h => h.title.toLowerCase().includes(q));
+  // prefer heroes matching chosenRole (if any)
+  const withRole = candidates.filter(h => h.roles && h.roles.includes(chosenRole));
+  if(withRole.length>0) candidates = withRole;
+
+  if(candidates.length === 0){
+    alert('هیرویی با فیلتر/جستجوی فعلی پیدا نشد.');
+    spinning = false;
+    spinBtn.disabled = false;
+    spinQuickBtn.disabled = false;
+    return;
+  }
+
+  const hero = pick(candidates);
+
+  // get build (liquipedia or fallback)
+  const build = await decideBuildFor(hero);
+
+  // render
+  await renderBuild(hero, roleLabel, build);
+
+  spinning = false;
+  spinBtn.disabled = false;
+  spinQuickBtn.disabled = false;
+}
+
+/* quick ×3 */
+async function quick3(){
+  spinQuickBtn.disabled = true;
+  for(let i=0;i<3;i++){
+    await doSpin();
+    await sleep(350);
+  }
+  spinQuickBtn.disabled = false;
+}
+
+/* download result as JSON */
+function downloadResult(){
+  const data = {
+    hero: outHero.textContent || null,
+    role: outRole.textContent || null,
+    items: outItems.textContent ? outItems.textContent.split(',').map(s=>s.trim()) : []
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'build-result.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/* reset UI */
+function resetUI(){
+  roleSlot.textContent = '—';
+  heroSlot.textContent = '—';
+  heroThumbImg.src = '';
+  heroRoles.textContent = '—';
+  buildTag.textContent = '—';
+  itemsGrid.innerHTML = '';
+  resultPanel.style.display = 'none';
+}
+
+/* init */
+(async function init(){
+  resetUI();
+  spinBtn.addEventListener('click', doSpin);
+  spinQuickBtn.addEventListener('click', quick3);
+  downloadBtn.addEventListener('click', downloadResult);
+  reloadBtn.addEventListener('click', resetUI);
+})();
+</script>
+</body>
+</html>
